@@ -37,7 +37,7 @@ stages:
 
    jobs:
      
-    - template: /aw0000_cloud/templates/job-templates/deployment.yaml@Cloud_AWS_Templates
+    - template: /aw0000_cloud/templates/job-templates/deployment.yaml@demo-david
       parameters:
         account: aws-netdata
         resource: s3
