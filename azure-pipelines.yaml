@@ -1,9 +1,9 @@
 resources:
   repositories:
-  - repository: Cloud_AWS_Templates
+  - repository: demo-david
     type: git
     ref: refs/heads/trunk
-    name: Cloud_AWS_Templates
+    name: demo-david
 
 trigger:
   branches:
@@ -14,7 +14,7 @@ trigger:
       - fw-eastwest-qa/*
       
 variables: 
-  project-folder: 's3-bucket'
+  project-folder: 'demo-david'
   cloudformation-template-s3: '$(System.DefaultWorkingDirectory)/$(project-folder)/template-s3.yaml'
   cloudformation-params-s3: '$(System.DefaultWorkingDirectory)/$(project-folder)/params-s3.json'
 
@@ -27,20 +27,18 @@ stages:
  - stage: deploy_dev
    displayName: Deploy DEV
    variables:
-   - group: 'infrastructure-security-variables-qa-eastwest-aws'
+   - group: 's3-bucket'
    - name: stack-name-s3
-     value: '$(application-code)-$(project-name)-$(env)-s3-stack'
+     value: '$(project-name)-$(env)-s3-stack'
    - name: stack-name-fw
      value: '$(application-code)-$(project-name)-$(env)-fw-stack'
    - name: env
-     value: dev
-   - name: buckets3-name
-     value: 'us-east-1-secvpc-eastwest-qa'
+     value: pdn
 
    jobs:
      
     - template: /aw0000_cloud/templates/job-templates/deployment.yaml@Cloud_AWS_Templates
       parameters:
-        account: bancolombia-transit-pdn-aws
+        account: aws-netdata
         resource: s3
         jobname: s3

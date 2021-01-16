@@ -1,15 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: S3 Bucket for VM-Series Booting process & Lambda files
+Description: S3 Bucket davidaavilar
 Parameters:
-  LambdaBucketName:
+  BucketName:
     Description: Nombre del Bucket
     Type: String
-    Default: us-east-1-secvpc-eastwest-qa
 Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref LambdaBucketName
+      BucketName: !Ref BucketName
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
