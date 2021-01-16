@@ -1,0 +1,6 @@
+[
+    {
+        "ParameterKey": "LambdaBucketName",
+        "ParameterValue": "#{LambdaBucketName}#"
+    }
+]

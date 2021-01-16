@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 Bucket for VM-Series Booting process & Lambda files
+Parameters:
+  LambdaBucketName:
+    Description: Nombre del Bucket
+    Type: String
+    Default: us-east-1-secvpc-eastwest-qa
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref LambdaBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls       : True
+        BlockPublicPolicy     : True
+        IgnorePublicAcls      : True
+        RestrictPublicBuckets : True

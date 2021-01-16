@@ -1,0 +1,75 @@
+resources:
+  repositories:
+  - repository: Cloud_AWS_Templates
+    type: git
+    ref: refs/heads/trunk
+    name: Cloud_AWS_Templates
+
+trigger:
+  branches:
+    include:
+      - trunk
+  paths:
+    include:
+      - fw-eastwest-qa/*
+      
+variables: 
+  project-folder: 'fw-eastwest-qa'
+  application-code: 'nu0069001'
+  project-name: 'fw-eastwest'
+  pmo: 'pmo30686'
+  cost-center: 'pmo30686'
+  business-service: 'ciberseguridad'
+  root-directory: '$(System.DefaultWorkingDirectory)'
+  cloudformation-template-s3: '$(System.DefaultWorkingDirectory)/$(project-folder)/template-s3.yaml'
+  cloudformation-params-s3: '$(System.DefaultWorkingDirectory)/$(project-folder)/params-s3.json'
+  cloudformation-template-fw: '$(System.DefaultWorkingDirectory)/$(project-folder)/template-fw.yaml'
+  cloudformation-params-fw: '$(System.DefaultWorkingDirectory)/$(project-folder)/params-fw.json'
+
+stages:
+
+# - stage: linterns 
+#   displayName: Validations
+#   jobs:
+#    - template: /aw0000_cloud/templates/job-templates/validations.yaml@Cloud_AWS_Templates
+
+ - stage: deploy_dev
+   displayName: Deploy DEV
+   variables:
+   - group: 'infrastructure-security-variables-qa-eastwest-aws'
+   - name: stack-name-s3
+     value: '$(application-code)-$(project-name)-$(env)-s3-stack'
+   - name: stack-name-fw
+     value: '$(application-code)-$(project-name)-$(env)-fw-stack'
+   - name: env
+     value: dev
+   - name: buckets3-name
+     value: 'us-east-1-secvpc-eastwest-qa'
+
+   jobs:
+     
+    - template: /aw0000_cloud/templates/job-templates/deployment.yaml@Cloud_AWS_Templates
+      parameters:
+        account: bancolombia-transit-pdn-aws
+        resource: s3
+        jobname: s3
+
+    - job: S3_Upload_Data
+      pool: Release-cloud
+      displayName: Upload data to s3
+      dependsOn: s3
+      steps:
+        - task: AmazonWebServices.aws-vsts-tools.S3Upload.S3Upload@1
+          inputs:
+            awsCredentials: 'bancolombia-transit-pdn-aws'
+            regionName: 'us-east-1'
+            bucketName: '$(buckets3-name)'
+            globExpressions: '**'
+            sourceFolder: '$(System.DefaultWorkingDirectory)/$(project-folder)/us-east-1-secvpc-eastwest-qa/'
+            
+
+    - template: /aw0000_cloud/templates/job-templates/deployment.yaml@Cloud_AWS_Templates
+      parameters:
+        account: bancolombia-transit-pdn-aws
+        resource: fw
+        depends: S3_Upload_Data
