@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Example'
+Resources:
+### DeveloperRole DevAccount
+  almBridgeMQPolicieDeveloperRole:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: almBridgeMQPolicieDeveloperRole
+      Roles:
+      - eksrole-alm
+      - BCO-DevOpsEngineerRole
+      - ReadOnly
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement: 
+          -
+            Effect: Allow
+            Action:
+            - 'iam'
+            Resource:
+            - "*"
+          - 
+            Effect: Allow
+            Action:
+              - 'secretsmanager:DescribeSecret'
+              - 'secretsmanager:GetSecretValue'
+            Resource: 
+            - "*"
+  NodeInstancePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Join [ "-", [ !Ref Project, !Ref Environment, nip] ]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+             - autoscaling:DescribeAutoScalingGroups
+             - autoscaling:DescribeAutoScalingInstances
+             - autoscaling:DescribeLaunchConfigurations
+             - autoscaling:DescribeTags
+             - autoscaling:SetDesiredCapacity
+             - autoscaling:TerminateInstanceInAutoScalingGroup
+            Resource:
+            - "*"
+  
