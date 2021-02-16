@@ -53,5 +53,5 @@ Resources:
 #      StorageEncrypted: !Ref ptestencrypted
       StorageEncrypted: false
       Tags: 
-      - Key: "bancolombia"
-      Value: "testtag"
+        - Key: "Name"
+          Value: "pruebacft"
