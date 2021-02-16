@@ -52,3 +52,6 @@ Resources:
 #      StorageEncrypted: !FindInMap [StorageEncrypted, !Ref EnvironmentType, value]
 #      StorageEncrypted: !Ref ptestencrypted
       StorageEncrypted: false
+      Tags: 
+      - Key: "bancolombia"
+      Value: "testtag"
