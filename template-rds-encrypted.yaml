@@ -53,5 +53,5 @@ Resources:
 #      StorageEncrypted: !Ref ptestencrypted
       StorageEncrypted: false
       Tags: 
-        - Key: "Name"
-          Value: "pruebacft"
+        - Key: "Repo"
+          Value: "david-dev"
