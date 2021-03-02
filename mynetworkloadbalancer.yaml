@@ -20,13 +20,13 @@ Resources:
           TargetGroupArn: !Ref TargetGroupPanorama1
       LoadBalancerArn: !Ref PanoramaLoadBalancer
       Port: 443
-      Protocol: TCP
+      Protocol: UDP
   TargetGroupPanorama1:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       Name: "Panorama-TG1"
       Port: 443
-      Protocol: TLS
+      Protocol: UDP
       Targets: 
         - Id: !Ref 'Panorama1Instance'
       TargetType: 'instance'
