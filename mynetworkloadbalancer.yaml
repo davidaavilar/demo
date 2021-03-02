@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: MyNetworkLoadBalancer davidaavilar
+Parameters:
+  Panorama1Instance:
+    Type: String
+  VPC:
+    Type: String
+Resources:
+  PanoramaLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: ipv4
+      Name: "Panorama-LB"
+      Type: 'network'
+  ListenerPanorama1:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+        - Type: 'forward'
+          TargetGroupArn: !Ref TargetGroupPanorama1
+      LoadBalancerArn: !Ref PanoramaLoadBalancer
+      Port: 443
+      Protocol: TCP
+  TargetGroupPanorama1:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      Name: "Panorama-TG1"
+      Port: 443
+      Protocol: TCP
+      Targets: 
+        - Id: !Ref 'Panorama1Instance'
+      TargetType: 'instance'
+      VpcId: !Ref 'VPC'
