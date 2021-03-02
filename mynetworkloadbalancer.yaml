@@ -26,7 +26,7 @@ Resources:
     Properties: 
       Name: "Panorama-TG1"
       Port: 443
-      Protocol: UDP
+      Protocol: TLS
       Targets: 
         - Id: !Ref 'Panorama1Instance'
       TargetType: 'instance'
