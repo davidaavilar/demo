@@ -12,15 +12,15 @@ Resources:
       IpAddressType: ipv4
       Name: "Panorama-LB"
       Type: 'network'
-#  ListenerNLB:
-#    Type: AWS::ElasticLoadBalancingV2::Listener
-#    Properties: 
-#      DefaultActions: 
-#        - Type: 'forward'
-#          TargetGroupArn: !Ref TargetGroupNLB
-#      LoadBalancerArn: !Ref NLBPanoramaLoadBalancer
-#      Port: 443
-#      Protocol: TCP
+  ListenerNLB:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions: 
+        - Type: 'forward'
+          TargetGroupArn: !Ref TargetGroupNLB
+      LoadBalancerArn: !Ref NLBPanoramaLoadBalancer
+      Port: 443
+      Protocol: TCP
   ALBPanoramaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
