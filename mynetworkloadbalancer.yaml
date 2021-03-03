@@ -36,8 +36,8 @@ Resources:
       LoadBalancerArn: !Ref PanoramaLoadBalancerNLB
       Port: 443
       Protocol: HTTPS
-      SslPolicy: ELBSecurityPolicy-FS-1-2-Res-2020-10
-#      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+#      SslPolicy: ELBSecurityPolicy-FS-1-2-Res-2020-10
+      SslPolicy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
 #      SslPolicy: ELBSecurityPolicy-2015-05
   TargetGroupNLB:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
