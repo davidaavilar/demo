@@ -6,27 +6,55 @@ Parameters:
   VPC:
     Type: String
 Resources:
-  PanoramaLoadBalancer:
+  NLBPanoramaLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties: 
       IpAddressType: ipv4
       Name: "Panorama-LB"
       Type: 'network'
-  ListenerPanorama1:
+#  ListenerNLB:
+#    Type: AWS::ElasticLoadBalancingV2::Listener
+#    Properties: 
+#      DefaultActions: 
+#        - Type: 'forward'
+#          TargetGroupArn: !Ref TargetGroupNLB
+#      LoadBalancerArn: !Ref NLBPanoramaLoadBalancer
+#      Port: 443
+#      Protocol: TCP
+  ALBPanoramaLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: ipv4
+      Name: "Panorama-LB"
+      Type: 'application'
+  ListenerALB:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties: 
       DefaultActions: 
         - Type: 'forward'
-          TargetGroupArn: !Ref TargetGroupPanorama1
-      LoadBalancerArn: !Ref PanoramaLoadBalancer
+          TargetGroupArn: !Ref TargetGroupALB
+      LoadBalancerArn: !Ref PanoramaLoadBalancerNLB
       Port: 443
-      Protocol: UDP
-  TargetGroupPanorama1:
+      Protocol: HTTPS
+      SslPolicy: 'ELBSecurityPolicy-FS-1-2-Res-2020-10'
+#      SslPolicy: 'ELBSecurityPolicy-TLS-1-2-Ext-2018-06'
+#      SslPolicy: 'ELBSecurityPolicy-2015-05'
+  TargetGroupNLB:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties: 
       Name: "Panorama-TG1"
       Port: 443
-      Protocol: HTTP
+      Protocol: HTTPS
+      Targets: 
+        - Id: !Ref 'Panorama1Instance'
+      TargetType: 'instance'
+      VpcId: !Ref 'VPC'
+  TargetGroupALB:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties: 
+      Name: "Panorama-TG1"
+      Port: 443
+      Protocol: HTTPS
       Targets: 
         - Id: !Ref 'Panorama1Instance'
       TargetType: 'instance'
