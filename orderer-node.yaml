@@ -25,13 +25,11 @@ Parameters:
   pInstanceType:
     Type: String
     Default: t3.micro
-    AllowedValues: [t3.micro, t3.2xlarge]
   pDNSRecord:
     Type: String
     ConstraintDescription: Must have a valid domain
   pTopicARN:
     Type: String
-    ConstraintDescription: Must be a valid arn
     Default: arn:aws:sns:us-east-1:763669947983:Route53SNS
   pDockerImage:
     Type: String
