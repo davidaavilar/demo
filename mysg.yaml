@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: MySecurityGroup davidaavilar
+Parameters:
+  Panorama1Instance:
+    Type: String
+  VPC:
+    Type: String
+Resources:
+  MgmtSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable services to MGMT interface
+      VpcId: !Ref 'VPC'
+      Tags:
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWS::StackName'
+              - MgmtSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: udp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 3978
+          ToPort: 3978
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Navegacion general
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Navegacion general
