@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Hyperledger Fabric Orderer node resources
-
 Parameters:
   applicationcode:
     Type: String
@@ -20,7 +19,6 @@ Parameters:
   businessservice:
     Type: String
     Default: blockchain
-
   pImageId:
     Type: AWS::EC2::Image::Id
     Default: ami-04a946859e7d13107
@@ -52,16 +50,11 @@ Parameters:
   pArnCertificateAuthority:
     Type: String
     Default: arn:aws:acm-pca:us-east-1:872308410481:certificate-authority/ee2eadae-1a4e-4034-9f22-cc2626854c20
-
-
   pCerPkiArn: 
     Description: The ARN of the SNS topic used to request a PKI Certificate. 
     Type: String
-
-
 Conditions:
   cEnvPdn: !Equals [!Ref environment, pdn]
-
 Resources:
   #-----------------------------LAUNCH CONFIGURATION-----------------
   rLaunchTemplate:
@@ -73,7 +66,6 @@ Resources:
       SecurityGroups:
         - !Sub '{{resolve:ssm:/${applicationcode}-${project}-${environment}-arn/orderer_security_group:1}}'
       AssociatePublicIpAddress: true
-     
   rSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
@@ -85,7 +77,6 @@ Resources:
   #-------------------------------AUTOSCALING GROUP------------------
   rAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
-    DependsOn: [rLogGroup]
     Properties:
       MinSize: '1'
       MaxSize: '1'
