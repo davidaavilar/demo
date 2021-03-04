@@ -72,7 +72,12 @@ Resources:
       Subscription:
         - Endpoint: !Ref pEmailSubscription
           Protocol: email
-      TopicName: !Join ["-", [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
+      TopicName: !Join
+        - '-'
+        - - !Ref applicationcode
+          - !Ref project
+          - !Ref environment
+          - !Ref pInstanceTagName
 
   #-------------------------------AUTOSCALING GROUP------------------
   rAutoScalingGroup:
@@ -91,11 +96,10 @@ Resources:
             - Ref: AWS::NoValue
       Tags:
         - Key: Name
-          Value: !Join ['-', [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
+          Value: !Join
+            - '-'
+            - - !Ref applicationcode
+              - !Ref project
+              - !Ref environment
+              - !Ref pInstanceTagName
           PropagateAtLaunch: true
-  #-----------------------------------LOG GROUP----------------------
-  rLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Join ['-', [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
-      RetentionInDays: 30
