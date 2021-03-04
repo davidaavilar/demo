@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Hyperledger Fabric Orderer node resources
+
+Parameters:
+  applicationcode:
+    Type: String
+    Default: nu0094001
+  project:
+    Type: String
+    Default: blockchain
+  environment:
+    Type: String
+    Default: dev
+  costcenter:
+    Type: String
+    Default: C103500281
+  pmo:
+    Type: String
+    Default: PMO31774
+  businessservice:
+    Type: String
+    Default: blockchain
+
+  pImageId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-04a946859e7d13107
+  pInstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t3.micro, t3.2xlarge]
+  pDNSRecord:
+    Type: String
+    ConstraintDescription: Must have a valid domain
+  pTopicARN:
+    Type: String
+    ConstraintDescription: Must be a valid arn
+    Default: arn:aws:sns:us-east-1:763669947983:Route53SNS
+  pDockerImage:
+    Type: String
+  pInstanceTagName:
+    Type: String
+    Default: Orderer
+  pLandingZoneStackName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: VPCStackName
+  pEmailSubscription:
+    Type: String
+    Default: crcrios@bancolombia.com.co
+  pRoleAcmPcaArn:
+    Type: String
+    Default: arn:aws:iam::872308410481:role/acm-pca-blockchain-dev
+  pArnCertificateAuthority:
+    Type: String
+    Default: arn:aws:acm-pca:us-east-1:872308410481:certificate-authority/ee2eadae-1a4e-4034-9f22-cc2626854c20
+
+
+  pCerPkiArn: 
+    Description: The ARN of the SNS topic used to request a PKI Certificate. 
+    Type: String
+
+
+Conditions:
+  cEnvPdn: !Equals [!Ref environment, pdn]
+
+Resources:
+  #-----------------------------LAUNCH CONFIGURATION-----------------
+  rLaunchTemplate:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref pImageId
+      InstanceType: !Ref pInstanceType
+      IamInstanceProfile: !Sub '{{resolve:ssm:/${applicationcode}-${project}-${environment}-arn/orderer_instance_profile:1}}'
+      SecurityGroups:
+        - !Sub '{{resolve:ssm:/${applicationcode}-${project}-${environment}-arn/orderer_security_group:1}}'
+      AssociatePublicIpAddress: true
+      UserData:
+        Fn::Base64: !Sub 
+          |
+            #!/bin/bash
+
+            export AWS_DEFAULT_REGION=${AWS::Region}
+            # Install JQ -> To parse JSON of Secrets Manager
+            sudo yum install jq -y
+
+            # Configuring DNS
+            AWS_INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+            AWS_INSTANCE_PUBLIC_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+            AWS_INSTANCE_PRIVATE_IP=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
+            echo --------------INFO--------------
+            echo AWS_INSTANCE_ID $AWS_INSTANCE_ID
+            echo AWS_INSTANCE_PUBLIC_IP $AWS_INSTANCE_PUBLIC_IP
+            echo AWS_INSTANCE_PRIVATE_IP $AWS_INSTANCE_PRIVATE_IP
+            echo ----------SETTING DNS-----------
+            aws sns publish --topic-arn ${pTopicARN} --message '{"EC2InstanceIP": "'"$AWS_INSTANCE_PRIVATE_IP"'", "AccountId": "${AWS::AccountId}", "EC2InstanceId": "'"$AWS_INSTANCE_ID"'", "RecordName": "${pDNSRecord}", "Event": "ec2:EC2_INSTANCE_LAUNCH"}' --region ${AWS::Region}
+
+
+            # Install Docker
+            sudo yum update -y
+            sudo amazon-linux-extras install docker
+            sudo service docker start
+            sudo usermod -a -G docker ec2-user
+            export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            docker swarm init
+
+            # Download scripts from S3
+            aws s3 cp s3://${applicationcode}-${project}-${environment}-scripts-hlf/scripts/ s3-scripts --recursive
+            aws s3 cp s3://${applicationcode}-${project}-${environment}-scripts-hlf/msp-structure/ s3-msp-structure --recursive
+            export SCRIPTS_FILES_PATH=$(pwd)/s3-scripts
+            export MSP_FILES_PATH=$(pwd)/s3-msp-structure
+
+            # EFS Volume Persistence
+            sudo chmod +x $SCRIPTS_FILES_PATH/efs-script.sh 
+            sudo $SCRIPTS_FILES_PATH/efs-script.sh ${applicationcode} ${project} ${environment} $AWS_DEFAULT_REGION ${pInstanceTagName} ${pRoleAcmPcaArn}
+
+            # Get Certificate TLS and ECDSA
+            sudo chmod +x $SCRIPTS_FILES_PATH/certificate-provisioning-script.sh 
+            sudo $SCRIPTS_FILES_PATH/certificate-provisioning-script.sh ${applicationcode} ${project} ${environment} $AWS_DEFAULT_REGION ${pInstanceTagName} ${pRoleAcmPcaArn} ${pArnCertificateAuthority} $MSP_FILES_PATH ${pDNSRecord}
+
+            # Run Docker image
+            docker pull ${pDockerImage}
+            docker service create --name orderer \
+            -p 7050:7050 -p 8443:8443 \
+            --log-driver=awslogs \
+            --log-opt awslogs-group=${rLogGroup} \
+            --mount type=bind,src=/var/hyperledger/production,dst=/var/hyperledger/production  \
+            --mount type=bind,src=$MSP_FILES_PATH/msp/,dst=/msp  \
+            --mount type=bind,src=/tls,dst=/etc/hyperledger/fabric/tls  \
+            --mount type=bind,src=$MSP_FILES_PATH/genesis.block,dst=/etc/hyperledger/fabric/genesis.block  \
+            ${pDockerImage}
+
+            # CloudWatch
+            ALARM_NAME=${applicationcode}-${project}-${environment}-container-status-${pInstanceTagName}
+            sudo chmod +x $SCRIPTS_FILES_PATH/metric-script.sh 
+            sudo $SCRIPTS_FILES_PATH/metric-script.sh init $ALARM_NAME ${project} $AWS_DEFAULT_REGION https://localhost:8443/healthz $SCRIPTS_FILES_PATH
+            sudo chmod +x $SCRIPTS_FILES_PATH/alarm-script.sh 
+            sudo $SCRIPTS_FILES_PATH/alarm-script.sh $ALARM_NAME ${project} $AWS_DEFAULT_REGION ${rSNSTopic}
+
+  #------------------------------SNS----------------
+  rSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref pEmailSubscription
+          Protocol: email
+      TopicName: !Join ["-", [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
+
+  #-------------------------------AUTOSCALING GROUP------------------
+  rAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: [rLogGroup]
+    Properties:
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      LaunchConfigurationName: !Ref rLaunchTemplate
+      VPCZoneIdentifier:
+        - Fn::ImportValue: !Sub ${pLandingZoneStackName}-PublicSubnet1ID
+        - Fn::ImportValue: !Sub ${pLandingZoneStackName}-PublicSubnet2ID
+        - Fn::If:
+            - cEnvPdn
+            - Fn::ImportValue: !Sub ${pLandingZoneStackName}-PublicSubnet3ID
+            - Ref: AWS::NoValue
+      Tags:
+        - Key: Name
+          Value: !Join ['-', [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
+          PropagateAtLaunch: true
+  #-----------------------------------LOG GROUP----------------------
+  rLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['-', [Ref: applicationcode, Ref: project, Ref: environment, Ref: pInstanceTagName]]
+      RetentionInDays: 30
