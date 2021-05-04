@@ -1,0 +1,23 @@
+apiVersion: admissionregistration.k8s.io/v1  # v1.16+
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "tw-validating-webhook"
+webhooks:
+  - name: "validating-webhook.twistlock.com"
+    # namespaceSelector
+    # matchPolicy: Equivalent # v1.15+
+    # timeoutSeconds: 2 # v1.14+
+    failurePolicy: Ignore # admissionregistration.k8s.io/v1 default failurePolicy to Fail
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
+    rules:
+      - operations: ["CREATE", "UPDATE", "CONNECT"]
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["*"]
+    clientConfig:
+      caBundle: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvVENDQWVXZ0F3SUJBZ0lRWnBTOGhGb29SamQybytaOW95aVFEREFOQmdrcWhraUc5dzBCQVFzRkFEQW8KTVJJd0VBWURWUVFLRXdsVWQybHpkR3h2WTJzeEVqQVFCZ05WQkFNVENWUjNhWE4wYkc5amF6QWVGdzB5TURFeApNRGt4T1RJeU1EQmFGdzB5TXpFeE1Ea3hPVEl5TURCYU1DZ3hFakFRQmdOVkJBb1RDVlIzYVhOMGJHOWphekVTCk1CQUdBMVVFQXhNSlZIZHBjM1JzYjJOck1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0MKQVFFQXdVWGVGamlpMm96SVJlQytXTkU3alhCODZGbnhLQUdiaDJhMXlnTWFpNTNrOURXZGJkVVpXYm04a211OQoyeWV3U1k3SXh0VU1KelJLWW1ad3kvOGhENzN2cFVaQldPS2p0bzY3amxEajM0YkNhWVJBNzlzZVV3M3JpeGVwCkxHTWozZm1ERlV3SnRXNVVjSjlpWG1TZjNZZFJoN1YyRWJvSmJOcHRoZFpSSzB3a2dBWDlsR3gyRzN6eHc0R3EKcjZ4Z1VMQmJkZ1dZQjViWWpuQ0FMS3F1WUh5dTdqL1d1QWp6SEpRbDlGN2FQa3BmTlh3MWhHdkJRZEhpN21FLwpzSXIrVkNUUDkvSmZjVUlCdFRWTDJuMHYza2dBZWk1Z1Z5ejRUSjZTVU5oQWV5eFpTMW1GalB2TGhlMElub1pSCnJXNzBYWlE3RVpjbkFEZFlSQUtTRTA4TkF3SURBUUFCb3lNd0lUQU9CZ05WSFE4QkFmOEVCQU1DQXF3d0R3WUQKVlIwVEFRSC9CQVV3QXdFQi96QU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFIMmNGNmRTeW9Fc0x4YjJQeVRrOApOZTZCVHdZQ1B0WStwb21mdjZvYUQyQ0VUVGUrbzJYRFpFdVIwdVJqZVdNMTd0c2h6ZjNiT2JtVm9qdXNuS1lvCm9JemdvUDZ0YUVXdGdZREtQbFRaK1k1TkFjaXRCQTdVdTFUNVNPTGFudFVUbkliWUJBekFwU1VqNm1DdnZ4ZjMKamRHdHlQOEhZRDdNSktpY1pxZ21YTjVEcTVzSHZ3bWhXUU1HRDIrWDhpZTVWcUtpUEwzVEFZdStwZGxHbS9IVwp1NUtKeHdjZS9JQzJhRnVpd1RXMitDWUhmdGF2L1ZSZFB4RHFQWkJMSDJYNWQ4bUM0WVF6VGs4TVRVNG1mQVFsCjBEeU5SWUNCVU56QnVDT3ZyUFNGR21Ed3NCamJjbmVJeUxFZ0JnaFhvMlZEaGtCUUZXTkFhdzlwSVJ4ck9nU2kKYlE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg"
+      service:
+        name: defender
+        namespace: "twistlock"
+        path: "/"
